@@ -1,8 +1,8 @@
 from flask_login import current_user
 
-from app.src.models import User, QuyDinh, HoaDon, PhieuKham, Thuoc, ThuocTrongPhieuKham
-from app.src.models import Arrangement, ArrList
-from app import app, db, data
+from src.models import User, QuyDinh, HoaDon, PhieuKham, Thuoc, ThuocTrongPhieuKham
+from src.models import Arrangement, ArrList
+from app import app, db
 import hashlib
 
 def auth_user(phone, password, role=None):

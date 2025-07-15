@@ -1,0 +1,8 @@
+runtime: python39
+entrypoint: gunicorn -b :$PORT index:app
+
+env_variables:
+  DB_HOST: "1.54.39.69"
+  DB_USER: "dainyisheree"
+  DB_PASSWORD: "123456"
+  DB_NAME: "OnlineAppointmentSystem"

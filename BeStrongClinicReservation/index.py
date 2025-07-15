@@ -1,15 +1,7 @@
-import random
-from datetime import date, timedelta
-from dotenv import load_dotenv
 from flask import render_template, request, redirect, jsonify, session
-import dao
-from app import app, login, db
+from src import dao
+from app import app, login
 from flask_login import login_user, logout_user, login_required, current_user
-from app.src.models import User, QuyDinh, HoaDon
-from app.src.models import UserRole
-from flask import make_response
-from datetime import datetime
-import os
 
 @login.user_loader
 def load_user(user_id):
@@ -117,6 +109,4 @@ def make_arrangement():
     return render_template('MakeArrangement/ArrangementRegister.html', err_msg=err_msg, sc_msg=sc_msg, result_msg=result_msg)
 
 if __name__ == '__main__':
-    from app.src import admin, utils
-
-    app.run(debug=1)
+    app.run(debug=True, port=8080, host='0.0.0.0')
