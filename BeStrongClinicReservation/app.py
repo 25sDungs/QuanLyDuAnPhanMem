@@ -26,6 +26,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{DB_USER}:{quote(DB_PA
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.config["PAGE_SIZE"] = 6
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['TESTING'] = True
 
 db = SQLAlchemy(app)
 

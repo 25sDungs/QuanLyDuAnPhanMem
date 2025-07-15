@@ -3,6 +3,10 @@ from src import dao
 from app import app, login
 from flask_login import login_user, logout_user, login_required, current_user
 
+@app.route("/health")
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 @login.user_loader
 def load_user(user_id):
     return dao.get_user_by_id(int(user_id))
