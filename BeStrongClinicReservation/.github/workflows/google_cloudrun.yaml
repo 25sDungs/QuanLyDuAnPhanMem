@@ -32,6 +32,8 @@ name: 'Build and Deploy to Cloud Run'
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [main]
 
 env:
   GAR_NAME: 'bestrongclinicreservationproduction'

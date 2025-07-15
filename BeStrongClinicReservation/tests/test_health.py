@@ -1,5 +1,5 @@
 import unittest
-from app import app
+from index import app
 
 class TestHealthFlaskApp(unittest.TestCase):
     def setUp(self):
@@ -7,5 +7,8 @@ class TestHealthFlaskApp(unittest.TestCase):
 
     def test_health_check(self):
         response = self.client.get('/health')
+        print(f"Status code: {response.status_code}")
+        print(f"Response data: {response.data}")
+        # Sau đó mới assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, {"status": "healthy"})
