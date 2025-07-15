@@ -41,7 +41,8 @@ jobs:
       - name: Deploy Local Flask Application
         run: |
           source venv/bin/activate
-          python3 index.py
+          python3 index.py &
+          sleep 2
 
       - name: Run tests
         run: |
