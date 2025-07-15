@@ -22,10 +22,14 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
 
+      - name: Change directory
+        run: |
+          cd BeStrongClinicReservation
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
 
       - name: Print debugging information
         run: |
@@ -34,8 +38,9 @@ jobs:
           echo "Contents of Working Directory: $(ls -l)"
           echo "Contents of site-packages: $(ls -l venv/lib/python*/site-packages)"
 
+      - name: Deploy Local Flask Application
+        run: python3 index.py
+
       - name: Run tests
         run: python3 -m unittest test_health.py
 
-      - name: Deploy Local Flask Application
-        run: nohup python3 index.py &
