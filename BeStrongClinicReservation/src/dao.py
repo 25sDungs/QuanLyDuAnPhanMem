@@ -1,7 +1,6 @@
 from flask_login import current_user
 
-from src.models import User, QuyDinh, HoaDon, PhieuKham, Thuoc, ThuocTrongPhieuKham
-from src.models import Arrangement, ArrList
+from src.models import User, QuyDinh, HoaDon, PhieuKham, Thuoc, ThuocTrongPhieuKham, Arrangement, ArrList
 from app import app, db
 import hashlib
 
@@ -19,12 +18,19 @@ def get_user_by_id(id_patient):
     return User.query.get(id_patient)
 
 def add_user(name, username, gender, password, phone):
-    password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
+    try:
+        password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
 
-    u = User(name=name, username=username, gender=gender, password=password, phone=phone)
+        u = User(name=name, username=username, gender=gender, password=password, phone=phone)
 
-    db.session.add(u)
-    db.session.commit()
+        db.session.add(u)
+        db.session.commit()
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Cannot add user because of error: {e}")
+        return False
 
 def check_user_phone(phone):
     u = User.query.filter(User.phone.__eq__(phone))
