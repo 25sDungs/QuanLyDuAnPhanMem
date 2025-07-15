@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./BeStrongClinicReservation
 
     steps:
       - name: Checkout code
@@ -22,10 +25,6 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
 
-      - name: Change directory
-        run: |
-          cd BeStrongClinicReservation
-
       - name: Print debugging information
         run: |
           echo "Python Version: $(python --version)"
@@ -35,12 +34,17 @@ jobs:
 
       - name: Install dependencies
         run: |
+          source venv/bin/activate
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
       - name: Deploy Local Flask Application
-        run: python3 index.py
+        run: |
+          source venv/bin/activate
+          python3 index.py
 
       - name: Run tests
-        run: python3 -m unittest test_health.py
+        run: |
+          source venv/bin/activate
+          python3 -m unittest test_health.py
 
