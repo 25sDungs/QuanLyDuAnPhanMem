@@ -1,10 +1,336 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'Layout/base.html' %}
+{% block content %}
 
-</body>
-</html>
+<link rel="stylesheet" href="static/styleExe/Specialists/specialists.css">
+
+<div class="doctors-container">
+    <div class="page-header">
+        <h1>Our Medical Specialists</h1>
+        <p>Find the right healthcare professional for your needs</p>
+    </div>
+
+    <div class="search-filter">
+        <div class="search-box">
+            <input type="text" placeholder="Search doctors by name or specialty..." id="searchInput">
+        </div>
+        <div class="filter-dropdown">
+            <select id="specialtyFilter">
+                <option value="">All Specialties</option>
+                <option value="cardiology">Cardiology</option>
+                <option value="dermatology">Dermatology</option>
+                <option value="neurology">Neurology</option>
+                <option value="orthopedics">Orthopedics</option>
+                <option value="pediatrics">Pediatrics</option>
+                <option value="psychiatry">Psychiatry</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="doctors-grid">
+        <div class="doctor-card" data-specialty="cardiology">
+            <div class="doctor-header">
+                <div class="doctor-avatar">DS</div>
+                <div class="doctor-info">
+                    <h3>Dr. Sarah Mitchell</h3>
+                    <div class="specialty">Cardiologist</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Metro General Hospital</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>123 Medical Center Dr, Suite 200</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 123-4567</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>15 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <span class="rating-text">4.9 (127 reviews)</span>
+            </div>
+            <div class="availability available">Available Today</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+
+        <div class="doctor-card" data-specialty="dermatology">
+            <div class="doctor-header">
+                <div class="doctor-avatar">MJ</div>
+                <div class="doctor-info">
+                    <h3>Dr. Michael Johnson</h3>
+                    <div class="specialty">Dermatologist</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Skin Care Medical Center</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>456 Wellness Ave, Floor 3</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 987-6543</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>12 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star empty">★</span>
+                </div>
+                <span class="rating-text">4.7 (89 reviews)</span>
+            </div>
+            <div class="availability busy">Next Available: Tomorrow</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+
+        <div class="doctor-card" data-specialty="neurology">
+            <div class="doctor-header">
+                <div class="doctor-avatar">EC</div>
+                <div class="doctor-info">
+                    <h3>Dr. Emily Chen</h3>
+                    <div class="specialty">Neurologist</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Brain & Spine Institute</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>789 Neurology Blvd, Suite 150</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 456-7890</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>18 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <span class="rating-text">4.8 (156 reviews)</span>
+            </div>
+            <div class="availability available">Available Today</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+
+        <div class="doctor-card" data-specialty="orthopedics">
+            <div class="doctor-header">
+                <div class="doctor-avatar">RW</div>
+                <div class="doctor-info">
+                    <h3>Dr. Robert Wilson</h3>
+                    <div class="specialty">Orthopedic Surgeon</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Orthopedic Sports Medicine</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>321 Sports Medicine Way</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 789-0123</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>20 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star empty">★</span>
+                </div>
+                <span class="rating-text">4.6 (203 reviews)</span>
+            </div>
+            <div class="availability unavailable">Booked This Week</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+
+        <div class="doctor-card" data-specialty="pediatrics">
+            <div class="doctor-header">
+                <div class="doctor-avatar">LP</div>
+                <div class="doctor-info">
+                    <h3>Dr. Lisa Parker</h3>
+                    <div class="specialty">Pediatrician</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Children's Healthcare Center</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>654 Kids Care Lane, Suite 100</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 234-5678</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>14 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <span class="rating-text">4.9 (178 reviews)</span>
+            </div>
+            <div class="availability available">Available Today</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+
+        <div class="doctor-card" data-specialty="psychiatry">
+            <div class="doctor-header">
+                <div class="doctor-avatar">JL</div>
+                <div class="doctor-info">
+                    <h3>Dr. James Lee</h3>
+                    <div class="specialty">Psychiatrist</div>
+                </div>
+            </div>
+            <div class="doctor-details">
+                <div class="detail-item">
+                    <span class="icon">🏥</span>
+                    <span>Mental Health Associates</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📍</span>
+                    <span>987 Wellness Center Dr</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">📞</span>
+                    <span>(555) 345-6789</span>
+                </div>
+                <div class="detail-item">
+                    <span class="icon">🎓</span>
+                    <span>16 years experience</span>
+                </div>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <span class="rating-text">4.8 (94 reviews)</span>
+            </div>
+            <div class="availability busy">Next Available: Friday</div>
+            <div class="doctor-actions">
+                <button class="btn btn-primary">Book Appointment</button>
+                <button class="btn btn-secondary">View Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const doctors = document.querySelectorAll('.doctor-card');
+
+        doctors.forEach(doctor => {
+            const name = doctor.querySelector('h3').textContent.toLowerCase();
+            const specialty = doctor.querySelector('.specialty').textContent.toLowerCase();
+
+            if (name.includes(searchTerm) || specialty.includes(searchTerm)) {
+                doctor.style.display = 'block';
+            } else {
+                doctor.style.display = 'none';
+            }
+        });
+    });
+
+    document.getElementById('specialtyFilter').addEventListener('change', function() {
+        const filterValue = this.value;
+        const doctors = document.querySelectorAll('.doctor-card');
+
+        doctors.forEach(doctor => {
+            const specialty = doctor.getAttribute('data-specialty');
+
+            if (filterValue === '' || specialty === filterValue) {
+                doctor.style.display = 'block';
+            } else {
+                doctor.style.display = 'none';
+            }
+        });
+    });
+
+    // Add click handlers for buttons
+    document.querySelectorAll('.btn-primary').forEach(button => {
+        button.addEventListener('click', function() {
+            alert('Booking appointment... (This would integrate with your booking system)');
+        });
+    });
+
+    document.querySelectorAll('.btn-secondary').forEach(button => {
+        button.addEventListener('click', function() {
+            alert('Viewing profile... (This would navigate to the doctor\'s profile page)');
+        });
+    });
+</script>
+
+{% endblock %}
