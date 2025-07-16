@@ -112,5 +112,9 @@ def make_arrangement():
 
     return render_template('MakeArrangement/ArrangementRegister.html', err_msg=err_msg, sc_msg=sc_msg, result_msg=result_msg)
 
+@app.route("/specialists", methods=['get'])
+def get_specialists():
+    return render_template('Specialists/specialistPage.html')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8080, host='0.0.0.0')
