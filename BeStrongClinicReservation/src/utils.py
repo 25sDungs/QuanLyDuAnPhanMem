@@ -1,11 +1,11 @@
-from models import *
+from src.models import *
 
-if __name__ == '__main__':
-    with app.app_context():
-        print("Creating tables...")
-        db.create_all()
 
-        print("Tables created successfully!")
+def get_profile_link(id):
+    hoso = HoSo.query.filter_by(BacSi_id=id).first()
+    return hoso.link_profile if hoso else None
 
-        db.session.commit()
-        print("Sample data added!")
+
+def load_specialists():
+    query = db.session.query(Doctor)
+    return query.all()

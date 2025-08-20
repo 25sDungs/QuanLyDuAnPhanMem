@@ -229,6 +229,7 @@
                                         <th scope="col">Address</th>
                                         <th scope="col">Appointment Date</th>
                                         <th scope="col">Description</th>
+                                        <th scope="col"></th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -240,6 +241,17 @@
                                         <td> {{ arr.address }}</td>
                                         <td> {{ arr.appointment_date }}</td>
                                         <td> {{ arr.description }}</td>
+                                        <td>
+                                            {% if arr.status != 'cancelled' %}
+                                            <form method="POST"
+                                                  action="{{ url_for('cancel_arrangement', arrangement_id=arr.id_arrangement) }}"
+                                                  onsubmit="return confirm('Bạn có chắc muốn hủy lịch này không?');">
+                                                <button type="submit" class="btn btn-danger btn-sm">Hủy lịch</button>
+                                            </form>
+                                            {% else %}
+                                            Lịch Đã Hủy
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                     </tbody>

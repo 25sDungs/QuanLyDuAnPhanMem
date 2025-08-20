@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styleExe/Specialists/specialists.css">
+    <title>Hồ sơ bác sĩ</title>
+</head>
+<body>
+<div class="container my-5">
+    <div class="card border-0 shadow-lg doctor-card">
+        <div class="card-header bg-primary text-white text-center py-4">
+            <h2 class="mb-0">Hồ Sơ Bác Sĩ</h2>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-12 col-md-6 mb-3">Tên Bác Sĩ: {{doctor.name}}</div>
+                <div class="col-12 col-md-6 mb-3">Giới Tính: {{doctor.gender}}</div>
+                <div class="col-12 col-md-6 mb-3">SĐT Liên Hệ: {{doctor.phone}}</div>
+                <div class="col-12 col-md-6 mb-3">Chứng chỉ: {{doctor.chungChi}}</div>
+                <div class="col-12 col-md-6 mb-3">Học vị: {{doctor.HocVi}}</div>
+                <div class="col-12 col-md-6 mb-3">Giờ làm việc: {{doctor.SoGioLamViec}}</div>
+                <div class="col-12 col-md-6 mb-3">Kinh nghiệm: {{doctor.KinhNghiem}}</div>
+                <div class="col-12 col-md-6 mb-3">Đánh giá: {{doctor.DanhGia}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

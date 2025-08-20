@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 
 from src.dao import add_user, auth_user
-from src.models import User, QuyDinh
+from src.models import User, QuyDinh, Arrangement
 from dotenv import load_dotenv
 from flask import render_template, request, redirect, jsonify, session, url_for, flash
-from src import dao
+from src import dao, utils
 from app import app, login, db
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -52,6 +52,21 @@ def login_process():
                 err_msg1 = '*Số điện thoại hoặc mật khẩu KHÔNG khớp!!'
 
     return render_template('Login/login.html', err_msg=err_msg, err_msg1=err_msg1)
+
+
+@app.route("/login-admin", methods=['post'])
+def login_admin():
+    if request.method == 'POST':
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+
+        if phone and password:
+            user = auth_user(phone=phone, password=password)
+            if user:
+                login_user(user)
+            return redirect("/admin")
+
+    return redirect("/login")
 
 
 @app.route("/register", methods=['get', 'post'])
@@ -98,8 +113,8 @@ def user_profile():
     user_arrangements = []
     err_msg = None
     success_msg = None
-    user_arrangements = dao.retrieve_user_arrangements(current_user.phone)
-
+    user_arrangements = dao.retrieve_user_arrangements(username=current_user.username)
+    print(user_arrangements)
     return render_template('User/userProfile.html', user_arrangements=user_arrangements, err_msg=err_msg,
                            success_msg=success_msg, current_user=current_user)
 
@@ -118,23 +133,24 @@ def make_arrangement():
     sc_msg = False
     result_msg = None
     if request.method == 'POST':
+        phone = request.form.get('phone')
         email = request.form.get('email')
         gender = request.form.get('gender')
         full_name = request.form.get('name')
         date = request.form.get('appointment_date')
-        if not full_name or not gender or not date or not email:
+        if not full_name or not gender or not date or not email or not phone:
             err_msg = '*Vui lòng nhập đầy đủ thông tin!!'
         else:
             data = request.form.copy()
-            del data['phone']
-            appointment_id, result_msg, sc_msg = dao.add_arrangement(**data, status='pending')
+            appointment_id, result_msg, sc_msg = dao.add_arrangement(**data, username=current_user.username,
+                                                                     status='pending')
             if sc_msg:
                 amount = db.session.query(QuyDinh).filter_by(ID=2).first().GiaTri
                 vnp_params = {
                     'vnp_Version': '2.1.0',
                     'vnp_Command': 'pay',
                     'vnp_TmnCode': VNPAY_TMN_CODE,
-                    'vnp_Amount': amount * 100,  # VNPay yêu cầu nhân 100
+                    'vnp_Amount': amount * 100,
                     'vnp_CurrCode': 'VND',
                     'vnp_TxnRef': str(appointment_id),
                     'vnp_OrderInfo': f'Thanh toan lich kham ID: {appointment_id}',
@@ -229,7 +245,7 @@ def google_auth():
     try:
         print(f"Session at Google auth: {session}")
         token = google.authorize_access_token()
-        nonce = session.pop('google_nonce', None)  # Retrieve and remove nonce
+        nonce = session.pop('google_nonce', None)
         user_info = google.parse_id_token(token, nonce=nonce)
         print(f"Google User Info: {user_info}")
         email = user_info['email']
@@ -283,5 +299,32 @@ def logout():
     return redirect('/')
 
 
+@app.route("/cancel_arrangement/<int:arrangement_id>", methods=["POST"])
+@login_required
+def cancel_arrangement(arrangement_id):
+    arrangement = Arrangement.query.get(arrangement_id)
+    arrangement.status = "cancelled"
+    db.session.commit()
+    return redirect("/user-profile")
+
+
+@app.route("/specialists", methods=['get'])
+def get_specialists():
+    specialists = utils.load_specialists()
+    return render_template('Specialists/specialistPage.html', specialists=specialists)
+
+
+@app.route("/specialists/<int:doctor_id>", methods=['GET', 'POST'])
+def doctor_profile(doctor_id):
+    hoso = utils.get_profile_link(doctor_id)
+    if hoso:
+        return redirect(hoso)
+
+    doctor = dao.get_doctor_by_id(doctor_id)
+    return render_template('Specialists/doctorProfile.html', doctor=doctor, doctor_id=doctor_id)
+
+
 if __name__ == '__main__':
+    from src import admin
+
     app.run(host='localhost', port=8080, debug=True)

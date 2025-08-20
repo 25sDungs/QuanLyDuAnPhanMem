@@ -1,6 +1,6 @@
 from flask_login import current_user
 
-from src.models import User, QuyDinh, Arrangement
+from src.models import User, QuyDinh, Arrangement, Doctor, HoSo
 from app import app, db
 import hashlib
 
@@ -19,6 +19,10 @@ def auth_user(phone, password, role=None):
 
 def get_user_by_id(id_patient):
     return User.query.get(id_patient)
+
+
+def get_doctor_by_id(id):
+    return Doctor.query.get(id)
 
 
 def add_user(name, username, gender, password, phone):
@@ -42,25 +46,37 @@ def check_user_phone(phone):
     return u.first().get_id()
 
 
+def check_user_username(username):
+    u = User.query.filter(User.username.__eq__(username))
+    return u.first().get_id()
+
+
 def check_unique_phone(phone):
     user = db.session.query(User).filter_by(phone=phone).first()
 
     return user is None
 
 
-def retrieve_user_arrangements(phone):
+def retrieve_user_arrangements(phone=None, username=None):
     query = Arrangement.query
 
     if phone:
         query = Arrangement.query.filter(Arrangement.phone.__eq__(phone))
         return query.all()
+    elif username:
+        id_patient = check_user_username(username)
+        query = Arrangement.query.filter(Arrangement.id_patient.__eq__(id_patient))
+        return query.all()
 
     return None
 
 
-def add_arrangement(email, gender, name, appointment_date, address, description, status):
-    phone = current_user.phone
-    id_patient = check_user_phone(phone)
+def add_arrangement(email, gender, name, appointment_date, address, description, phone, username, status):
+    if not phone:
+        phone = current_user.phone
+        id_patient = check_user_phone(phone)
+    else:
+        id_patient = check_user_username(username)
     result_msg = None
     patient_limit = db.session.query(QuyDinh.GiaTri).first().GiaTri
     sc_msg = None
