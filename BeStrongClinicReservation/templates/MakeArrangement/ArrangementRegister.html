@@ -26,7 +26,7 @@
                 <label class="successful_attention">{{ sc_msg }} </label>
                 {% endif %}
                 <label for="phone">Số điện thoại:*</label>
-                <input type="number" placeholder="{{ current_user.phone }}" name="phone" id="phone" readonly>
+                <input type="number" placeholder="{{ current_user.phone }}" name="phone" id="phone">
                 <label for="fullName">Họ và Tên:*</label>
                 <input type="text" placeholder="Nguyễn Văn A" name="name" id="name">
                 <label for="email">Email:*</label>
@@ -56,7 +56,7 @@
                 <input type="text" placeholder="Địa chỉ" name="address" id="address">
                 <textarea cols="30" rows="10" id="description" name="description"
                           placeholder="Bệnh nhân ghi chú tại đây (Tình trạng đang gặp phải mô tả về bệnh, ...)"></textarea>
-                <button class="btn">Gửi</button>
+                <button class="btn" id="payment-button">Thanh Toán và Gửi</button>
             </div>
         </div>
     </form>

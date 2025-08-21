@@ -1,7 +1,4 @@
-from src.models import *
-from app import app, db
-import sys
-import os
+from models import *
 
 if __name__ == '__main__':
     with app.app_context():
