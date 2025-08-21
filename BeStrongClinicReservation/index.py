@@ -41,7 +41,7 @@ def logout_process():
     logout_user()
     return redirect('/')
 
-@app.route("/register", methods=['get', 'post'])
+@app.route("/register", methods=['GET', 'POST'])
 def register_process():
     err_msg = None
     err_msg1 = None

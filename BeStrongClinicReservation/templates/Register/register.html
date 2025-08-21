@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Ký</title>
     <link rel="shortcut icon" type="image/png" sizes="32x32" href="static/images/clinic.png">
-    <link rel="stylesheet" href="static/styleExe/LoginRegister/login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styleExe/LoginRegister/login.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
 <div class="container">
     <div class="form-container sign-up-container">
-        <form method="post" action="/register" enctype="multipart/form-data">
+        <form method="POST" action="/register" enctype="multipart/form-data">
             <h1>Tạo tài khoản</h1>
             <div class="social-container">
                 <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
