@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý lịch làm việc - Bác sĩ</title>
+    <link rel="stylesheet" href="static/styleExe/WorkSchedule/workSchedule.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-calendar-alt"></i> Quản lý lịch làm việc</h1>
+            <label class="greeting">
+                Chào {{ current_user.username }}
+                (
+                {% if current_user.is_doctor() %}
+                BÁC SĨ
+                {% elif current_user.is_admin() %}
+                ADMIN
+                {% elif current_user.is_user() %}
+                BỆNH NHÂN
+                {% endif %}
+                )
+            </label>
+        </div>
+
+        <div class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ 'success' if category == 'success' else 'error' }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-clock"></i>
+                    Lịch làm việc hiện tại
+                </h2>
+                
+                <div class="current-schedule">
+                    {% set working_days = working_days_summary %}
+                    {% if working_days %}
+                        <div class="schedule-summary">
+                            {% for day_info in working_days %}
+                                <div class="day-summary">
+                                    <h4>{{ day_info.day }}</h4>
+                                    <div class="shift-tags">
+                                        {% for shift in day_info.shifts %}
+                                            <span class="shift-tag {{ 'morning' if shift == 'Sang' else 'afternoon' }}">
+                                                {{ 'Buổi sáng' if shift == 'Sang' else 'Buổi chiều' }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Chưa có lịch làm việc nào được thiết lập</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Chọn lịch làm việc
+                </h2>
+
+                <form method="POST" id="scheduleForm">
+                    <div class="schedule-grid">
+                        {% set available_slots = available_time_slots %}
+                        {% set days_grouped = {} %}
+                        {% for slot in available_slots %}
+                            {% if slot.thu_name not in days_grouped %}
+                                {% set _ = days_grouped.update({slot.thu_name: []}) %}
+                            {% endif %}
+                            {% set _ = days_grouped[slot.thu_name].append(slot) %}
+                        {% endfor %}
+
+                        {% for day_name, slots in days_grouped.items() %}
+                            <div class="day-card">
+                                <h3 class="day-title">{{ day_name }}</h3>
+                                <div class="shift-options">
+                                    {% for slot in slots %}
+                                        <div class="shift-checkbox {{ 'selected' if slot.is_selected else '' }}">
+                                            {% if slot.is_selected %}
+                                                <div class="schedule-item">
+                                                    <div>
+                                                        <i class="fas fa-check-circle"></i>
+                                                        <span class="shift-label">
+                                                            {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
+                                                        </span>
+                                                    </div>
+                                                    <button type="submit" name="action" value="remove" class="remove-btn" 
+                                                            onclick="document.getElementById('schedule_id').value='{{ slot.schedule_id }}'"
+                                                            title="Xóa lịch này">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            {% else %}
+                                                <label style="display: flex; align-items: center; cursor: pointer; width: 100%;">
+                                                    <input type="checkbox" name="selected_slots" 
+                                                           value="{{ slot.thu }}_{{ slot.buoi }}"
+                                                           onchange="toggleSlotSelection(this, {{ slot.thu }}, '{{ slot.buoi }}')">
+                                                    <span class="shift-label">
+                                                        {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
+                                                    </span>
+                                                </label>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <input type="hidden" name="thu" id="selected_thu">
+                    <input type="hidden" name="buoi" id="selected_buoi">
+                    <input type="hidden" name="schedule_id" id="schedule_id">
+
+                    <div class="action-buttons">
+                        <button type="submit" name="action" value="add" class="btn btn-primary" id="addButton" disabled>
+                            <i class="fas fa-plus"></i>
+                            Thêm lịch đã chọn
+                        </button>
+                        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-success">
+                            <i class="fas fa-home"></i>
+                            Về trang chủ
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Thống kê
+                </h2>
+                <div class="current-schedule">
+                    {% set total_schedules = schedule_stats.total_schedules %}
+                    <div class="schedule-summary">
+                        <div class="day-summary">
+                            <h4>Tổng số ca làm việc</h4>
+                            <p style="font-size: 2em; color: #3498db; font-weight: bold;">{{ total_schedules }}</p>
+                        </div>
+                        <div class="day-summary">
+                            <h4>Số ngày làm việc trong tuần</h4>
+                            <p style="font-size: 2em; color: #27ae60; font-weight: bold;">{{ schedule_stats.working_days_count }}</p>
+                        </div>
+                        <div class="day-summary">
+                            <h4>Trạng thái</h4>
+                            <p style="color: {{ '#27ae60' if total_schedules > 0 else '#e74c3c' }};">
+                                {{ schedule_stats.status }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedSlots = [];
+
+        function toggleSlotSelection(checkbox, thu, buoi) {
+            const slotKey = `${thu}_${buoi}`;
+            
+            if (checkbox.checked) {
+                if (!selectedSlots.find(slot => slot.key === slotKey)) {
+                    selectedSlots.push({
+                        key: slotKey,
+                        thu: thu,
+                        buoi: buoi,
+                        element: checkbox.parentElement.parentElement
+                    });
+                }
+                checkbox.parentElement.parentElement.classList.add('selected');
+            } else {
+                // Remove from selected slots
+                selectedSlots = selectedSlots.filter(slot => slot.key !== slotKey);
+                checkbox.parentElement.parentElement.classList.remove('selected');
+            }
+
+            updateAddButton();
+        }
+
+        function updateAddButton() {
+            const addButton = document.getElementById('addButton');
+            if (selectedSlots.length > 0) {
+                addButton.disabled = false;
+                addButton.innerHTML = `<i class="fas fa-plus"></i> Thêm ${selectedSlots.length} lịch đã chọn`;
+            } else {
+                addButton.disabled = true;
+                addButton.innerHTML = '<i class="fas fa-plus"></i> Thêm lịch đã chọn';
+            }
+        }
+
+        document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+            const action = e.submitter.value;
+            
+            if (action === 'add') {
+                e.preventDefault();
+                
+                if (selectedSlots.length === 0) {
+                    alert('Vui lòng chọn ít nhất một ca làm việc!');
+                    return;
+                }
+
+                // Add each selected slot
+                let addedCount = 0;
+                selectedSlots.forEach(slot => {
+                    // Create a new form for each slot
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.style.display = 'none';
+
+                    const actionInput = document.createElement('input');
+                    actionInput.name = 'action';
+                    actionInput.value = 'add';
+                    form.appendChild(actionInput);
+
+                    const thuInput = document.createElement('input');
+                    thuInput.name = 'thu';
+                    thuInput.value = slot.thu;
+                    form.appendChild(thuInput);
+
+                    const buoiInput = document.createElement('input');
+                    buoiInput.name = 'buoi';
+                    buoiInput.value = slot.buoi;
+                    form.appendChild(buoiInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            }
+        });
+
+        // Auto-refresh page after successful addition (simple approach)
+        if (window.location.search.includes('success')) {
+            setTimeout(() => {
+                window.location.href = window.location.pathname;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
