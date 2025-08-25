@@ -1,4 +1,4 @@
-from app import app, db
+from BeStrongClinicReservation.app import app, db
 from flask import redirect
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
@@ -61,26 +61,6 @@ class BaseAdminView(BaseView):
         return current_user.is_authenticated and current_user.is_admin()
 
 
-# class StatsView(BaseAdminView):
-#     @expose("/")
-#     def index(self):
-#         month = request.args.get('ThangThongKe')
-#         year = request.args.get('NamThongKe')
-#         type_stats = request.args.get('LoaiThongKe')
-#         from_date = request.args.get('from_date')
-#         to_date = request.args.get('to_date')
-#
-#         if year and type_stats == 'Revenue':
-#             rstats = utils.revenue_stats_by_month(year=year)
-#             return self.render('admin/stats.html', sum=utils.sum_revenue(rstats), rstats_year=rstats)
-#
-#         elif type_stats == 'Revenue':
-#             rstats = utils.revenue_stats(month=month, from_date=from_date, to_date=to_date)
-#             return self.render('admin/stats.html', sum=utils.sum_revenue(rstats), rstats=rstats)
-#
-#         return self.render('admin/stats.html')
-
-
 class LogoutView(BaseAdminView):
     @expose('/')
     def __index__(self):
@@ -92,5 +72,4 @@ admin.add_view(UserView(User, db.session))
 admin.add_view(QuyDinhView(QuyDinh, db.session))
 admin.add_view(DoctorView(Doctor, db.session))
 admin.add_view(ProfileView(HoSo, db.session))
-# admin.add_view(StatsView(name='Thống Kê'))
 admin.add_view(LogoutView(name='Đăng Xuất'))

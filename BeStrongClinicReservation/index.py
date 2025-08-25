@@ -6,11 +6,13 @@ from datetime import datetime, timedelta
 
 from authlib.integrations.flask_client import OAuth
 
-from src.dao import add_user, auth_user
+from src.dao import (add_user, auth_user, get_available_time_slots, add_doctor_schedule, remove_doctor_schedule,
+get_doctor_working_days_summary,get_all_doctors, )
+
 from src.models import User, QuyDinh, Arrangement
 from dotenv import load_dotenv
 from flask import render_template, request, redirect, jsonify, session, url_for, flash
-from src import dao, utils
+from src import dao
 from app import app, login, db
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -54,19 +56,71 @@ def login_process():
     return render_template('Login/login.html', err_msg=err_msg, err_msg1=err_msg1)
 
 
-@app.route("/login-admin", methods=['post'])
-def login_admin():
+@app.route("/work-schedule", methods=['GET', 'POST'])
+@login_required
+def work_schedule():
+    doctors = get_all_doctors()
+    selected_doctor_id = request.form.get('selected_doctor') or request.args.get('doctor_id')
+
+    working_days_summary = []
+    available_time_slots = []
+
+    if selected_doctor_id:
+        try:
+            selected_doctor_id = int(selected_doctor_id)
+            working_days_summary = get_doctor_working_days_summary(selected_doctor_id)
+            available_time_slots = get_available_time_slots(selected_doctor_id)
+        except (ValueError, TypeError):
+            flash('ID bác sĩ không hợp lệ', 'error')
+            selected_doctor_id = None
+
     if request.method == 'POST':
-        phone = request.form.get('phone')
-        password = request.form.get('password')
+        action = request.form.get('action')
 
-        if phone and password:
-            user = auth_user(phone=phone, password=password)
-            if user:
-                login_user(user)
-            return redirect("/admin")
+        if not selected_doctor_id:
+            flash('Vui lòng chọn bác sĩ trước khi thao tác!', 'error')
+            return redirect(url_for('work_schedule'))
 
-    return redirect("/login")
+        if action == 'add':
+            thu = request.form.get('thu')
+            buoi = request.form.get('buoi')
+
+            if not thu or not buoi:
+                flash('Thiếu thông tin ngày và buổi làm việc!', 'error')
+            else:
+                try:
+                    thu = int(thu)
+                    success, message = add_doctor_schedule(selected_doctor_id, thu, buoi)
+                    if success:
+                        flash('Đã thêm lịch làm việc thành công!', 'success')
+                    else:
+                        flash(message or 'Có lỗi khi thêm lịch làm việc!', 'error')
+                except ValueError:
+                    flash('Thông tin ngày không hợp lệ!', 'error')
+
+        elif action == 'remove':
+            schedule_id = request.form.get('schedule_id')
+
+            if not schedule_id:
+                flash('Thiếu thông tin lịch cần xóa!', 'error')
+            else:
+                try:
+                    schedule_id = int(schedule_id)
+                    success, message = remove_doctor_schedule(selected_doctor_id, schedule_id)
+                    if success:
+                        flash('Đã xóa lịch làm việc thành công!', 'success')
+                    else:
+                        flash(message or 'Có lỗi khi xóa lịch làm việc!', 'error')
+                except ValueError:
+                    flash('ID lịch không hợp lệ!', 'error')
+
+        return redirect(url_for('work_schedule', doctor_id=selected_doctor_id))
+
+    return render_template('admin/lichLamViec.html',
+                           doctors=doctors,
+                           selected_doctor_id=selected_doctor_id,
+                           working_days_summary=working_days_summary,
+                           available_time_slots=available_time_slots)
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -310,13 +364,13 @@ def cancel_arrangement(arrangement_id):
 
 @app.route("/specialists", methods=['get'])
 def get_specialists():
-    specialists = utils.load_specialists()
+    specialists = dao.load_specialists()
     return render_template('Specialists/specialistPage.html', specialists=specialists)
 
 
 @app.route("/specialists/<int:doctor_id>", methods=['GET', 'POST'])
 def doctor_profile(doctor_id):
-    hoso = utils.get_profile_link(doctor_id)
+    hoso = dao.get_profile_link(doctor_id)
     if hoso:
         return redirect(hoso)
 

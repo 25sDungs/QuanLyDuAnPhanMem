@@ -1,27 +1,15 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý lịch làm việc - Bác sĩ</title>
-    <link rel="stylesheet" href="static/styleExe/WorkSchedule/workSchedule.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
+{% block content %}
+<link rel="shortcut icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename= 'images/clinic.png') }}">
+<link rel="stylesheet" href="static/styleExe/WorkSchedule/workSchedule.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<meta name = "description" content="Quản lý lịch làm việc Bác Sĩ">
+<title>Quản Lý Lịch Làm Việc</title>
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-calendar-alt"></i> Quản lý lịch làm việc</h1>
+            <h1><i class="fas fa-calendar-alt"></i> Quản Lý Lịch Làm Việc</h1>
             <label class="greeting">
-                Chào {{ current_user.username }}
-                (
-                {% if current_user.is_doctor() %}
-                BÁC SĨ
-                {% elif current_user.is_admin() %}
-                ADMIN
-                {% elif current_user.is_user() %}
-                BỆNH NHÂN
-                {% endif %}
-                )
+                Hello admin {{ current_user.username }}
             </label>
         </div>
 
@@ -39,134 +27,154 @@
                 {% endif %}
             {% endwith %}
 
+            <!-- Phần chọn bác sĩ -->
             <div class="section">
+                <div class="alert alert-info" style="background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; display: flex; align-items: center;">
+                    <i class="fas fa-info-circle" style="margin-right: 10px; font-size: 16px;"></i>
+                    <span><strong>Lưu ý:</strong> Người quản trị cần chọn lịch làm việc cho các bác sĩ trước 1 tuần (thứ 7 hàng tuần)</span>
+                </div>
                 <h2 class="section-title">
-                    <i class="fas fa-clock"></i>
-                    Lịch làm việc hiện tại
+                    <i class="fas fa-user-md"></i>
+                    Chọn Bác Sĩ
                 </h2>
                 
-                <div class="current-schedule">
-                    {% set working_days = working_days_summary %}
-                    {% if working_days %}
-                        <div class="schedule-summary">
-                            {% for day_info in working_days %}
-                                <div class="day-summary">
-                                    <h4>{{ day_info.day }}</h4>
-                                    <div class="shift-tags">
-                                        {% for shift in day_info.shifts %}
-                                            <span class="shift-tag {{ 'morning' if shift == 'Sang' else 'afternoon' }}">
-                                                {{ 'Buổi sáng' if shift == 'Sang' else 'Buổi chiều' }}
-                                            </span>
+                <div class="doctor-selection">
+                    <form method="GET" id="doctorSelectionForm">
+                        <div class="doctor-select-container">
+                            <label for="doctor_select">Bác sĩ:</label>
+                            <select name="doctor_id" id="doctor_select" onchange="this.form.submit()">
+                                <option value="">-- Chọn bác sĩ --</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor.id_patient }}" 
+                                            {{ 'selected' if selected_doctor_id and selected_doctor_id == doctor.id_patient else '' }}>
+                                        BS. {{ doctor.name }} ({{ doctor.username }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if selected_doctor_id %}
+                            {% for doctor in doctors %}
+                                {% if doctor.id_patient == selected_doctor_id %}
+                                    <div class="doctor-info">
+                                        <strong>Quản lý lịch làm việc của:</strong> BS. {{ doctor.name }} ({{ doctor.username }})
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            {% if selected_doctor_id %}
+                <!-- Phần lịch trống hiện tại -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Lịch Làm Việc Hiện Tại
+                    </h2>
+                    
+                    <div class="current-schedule">
+                        {% if working_days_summary %}
+                            <div class="schedule-summary">
+                                {% for day_info in working_days_summary %}
+                                    <div class="day-summary">
+                                        <h4>{{ day_info.day }}</h4>
+                                        <div class="shift-tags">
+                                            {% for shift in day_info.shifts %}
+                                                <span class="shift-tag {{ 'morning' if shift == 'Sang' else 'afternoon' }}">
+                                                    {{ 'Buổi sáng' if shift == 'Sang' else 'Buổi chiều' }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>Bác sĩ này chưa có lịch làm việc nào được thiết lập</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Phần chọn lịch làm việc -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-edit"></i>
+                        Chọn Lịch Làm Việc
+                    </h2>
+
+                    <form method="POST" id="scheduleForm">
+                        <input type="hidden" name="selected_doctor" value="{{ selected_doctor_id }}">
+                        
+                        <div class="schedule-grid">
+                            {% set days_grouped = {} %}
+                            {% for slot in available_time_slots %}
+                                {% if slot.thu_name not in days_grouped %}
+                                    {% set _ = days_grouped.update({slot.thu_name: []}) %}
+                                {% endif %}
+                                {% set _ = days_grouped[slot.thu_name].append(slot) %}
+                            {% endfor %}
+
+                            {% for day_name, slots in days_grouped.items() %}
+                                <div class="day-card">
+                                    <h3 class="day-title">{{ day_name }}</h3>
+                                    <div class="shift-options">
+                                        {% for slot in slots %}
+                                            <div class="shift-checkbox {{ 'selected' if slot.is_selected else '' }}">
+                                                {% if slot.is_selected %}
+                                                    <div class="schedule-item">
+                                                        <div>
+                                                            <i class="fas fa-check-circle"></i>
+                                                            <span class="shift-label">
+                                                                {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
+                                                            </span>
+                                                        </div>
+                                                        <button type="submit" name="action" value="remove" class="remove-btn" 
+                                                                onclick="document.getElementById('schedule_id').value='{{ slot.schedule_id }}'"
+                                                                title="Xóa lịch này">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <label style="display: flex; align-items: center; cursor: pointer; width: 100%;">
+                                                        <input type="checkbox" name="selected_slots" 
+                                                               value="{{ slot.thu }}_{{ slot.buoi }}"
+                                                               onchange="toggleSlotSelection(this, {{ slot.thu }}, '{{ slot.buoi }}')">
+                                                        <span class="shift-label">
+                                                            {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
+                                                        </span>
+                                                    </label>
+                                                {% endif %}
+                                            </div>
                                         {% endfor %}
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-times"></i>
-                            <p>Chưa có lịch làm việc nào được thiết lập</p>
+
+                        <input type="hidden" name="thu" id="selected_thu">
+                        <input type="hidden" name="buoi" id="selected_buoi">
+                        <input type="hidden" name="schedule_id" id="schedule_id">
+
+                        <div class="action-buttons">
+                            <button type="submit" name="action" value="add" class="btn btn-primary" id="addButton" disabled>
+                                <i class="fas fa-plus"></i>
+                                Thêm lịch đã chọn
+                            </button>
                         </div>
-                    {% endif %}
+                    </form>
                 </div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-edit"></i>
-                    Chọn lịch làm việc
-                </h2>
-
-                <form method="POST" id="scheduleForm">
-                    <div class="schedule-grid">
-                        {% set available_slots = available_time_slots %}
-                        {% set days_grouped = {} %}
-                        {% for slot in available_slots %}
-                            {% if slot.thu_name not in days_grouped %}
-                                {% set _ = days_grouped.update({slot.thu_name: []}) %}
-                            {% endif %}
-                            {% set _ = days_grouped[slot.thu_name].append(slot) %}
-                        {% endfor %}
-
-                        {% for day_name, slots in days_grouped.items() %}
-                            <div class="day-card">
-                                <h3 class="day-title">{{ day_name }}</h3>
-                                <div class="shift-options">
-                                    {% for slot in slots %}
-                                        <div class="shift-checkbox {{ 'selected' if slot.is_selected else '' }}">
-                                            {% if slot.is_selected %}
-                                                <div class="schedule-item">
-                                                    <div>
-                                                        <i class="fas fa-check-circle"></i>
-                                                        <span class="shift-label">
-                                                            {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
-                                                        </span>
-                                                    </div>
-                                                    <button type="submit" name="action" value="remove" class="remove-btn" 
-                                                            onclick="document.getElementById('schedule_id').value='{{ slot.schedule_id }}'"
-                                                            title="Xóa lịch này">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-                                            {% else %}
-                                                <label style="display: flex; align-items: center; cursor: pointer; width: 100%;">
-                                                    <input type="checkbox" name="selected_slots" 
-                                                           value="{{ slot.thu }}_{{ slot.buoi }}"
-                                                           onchange="toggleSlotSelection(this, {{ slot.thu }}, '{{ slot.buoi }}')">
-                                                    <span class="shift-label">
-                                                        {{ 'Buổi sáng' if slot.buoi == 'Sang' else 'Buổi chiều' }}
-                                                    </span>
-                                                </label>
-                                            {% endif %}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    <input type="hidden" name="thu" id="selected_thu">
-                    <input type="hidden" name="buoi" id="selected_buoi">
-                    <input type="hidden" name="schedule_id" id="schedule_id">
-
-                    <div class="action-buttons">
-                        <button type="submit" name="action" value="add" class="btn btn-primary" id="addButton" disabled>
-                            <i class="fas fa-plus"></i>
-                            Thêm lịch đã chọn
-                        </button>
-                        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-success">
-                            <i class="fas fa-home"></i>
-                            Về trang chủ
-                        </a>
-                    </div>
-                </form>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-chart-bar"></i>
-                    Thống kê
-                </h2>
-                <div class="current-schedule">
-                    {% set total_schedules = schedule_stats.total_schedules %}
-                    <div class="schedule-summary">
-                        <div class="day-summary">
-                            <h4>Tổng số ca làm việc</h4>
-                            <p style="font-size: 2em; color: #3498db; font-weight: bold;">{{ total_schedules }}</p>
-                        </div>
-                        <div class="day-summary">
-                            <h4>Số ngày làm việc trong tuần</h4>
-                            <p style="font-size: 2em; color: #27ae60; font-weight: bold;">{{ schedule_stats.working_days_count }}</p>
-                        </div>
-                        <div class="day-summary">
-                            <h4>Trạng thái</h4>
-                            <p style="color: {{ '#27ae60' if total_schedules > 0 else '#e74c3c' }};">
-                                {{ schedule_stats.status }}
-                            </p>
-                        </div>
+            {% else %}
+                <div class="section">
+                    <div class="empty-state">
+                        <i class="fas fa-user-md"></i>
+                        <p>Vui lòng chọn bác sĩ để quản lý lịch làm việc</p>
                     </div>
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -187,7 +195,6 @@
                 }
                 checkbox.parentElement.parentElement.classList.add('selected');
             } else {
-                // Remove from selected slots
                 selectedSlots = selectedSlots.filter(slot => slot.key !== slotKey);
                 checkbox.parentElement.parentElement.classList.remove('selected');
             }
@@ -217,13 +224,15 @@
                     return;
                 }
 
-                // Add each selected slot
-                let addedCount = 0;
                 selectedSlots.forEach(slot => {
-                    // Create a new form for each slot
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.style.display = 'none';
+
+                    const selectedDoctorInput = document.createElement('input');
+                    selectedDoctorInput.name = 'selected_doctor';
+                    selectedDoctorInput.value = '{{ selected_doctor_id }}';
+                    form.appendChild(selectedDoctorInput);
 
                     const actionInput = document.createElement('input');
                     actionInput.name = 'action';
@@ -246,12 +255,19 @@
             }
         });
 
-        // Auto-refresh page after successful addition (simple approach)
-        if (window.location.search.includes('success')) {
-            setTimeout(() => {
-                window.location.href = window.location.pathname;
-            }, 2000);
-        }
+        // Flash message auto hide
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 3000);
+            });
+        });
     </script>
 </body>
-</html>
+{% endblock %}
