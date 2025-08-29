@@ -750,3 +750,191 @@ body {
         display: none;
     }
 }
+
+        .occupied {
+            opacity: 0.6;
+            background-color: #f8f9fa !important;
+        }
+
+        .occupied-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .occupied-slot i {
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .occupied-text {
+            font-size: 11px;
+            margin-top: 4px;
+            color: #6c757d;
+        }
+
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+        }
+
+        .schedule-item div {
+            display: flex;
+            align-items: center;
+        }
+
+        .schedule-item i {
+            margin-right: 8px;
+            color: #155724;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .week-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .week-info h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .week-info .week-dates {
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .schedule-item-enhanced {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border-left: 4px solid #dee2e6;
+    }
+
+    .schedule-item-enhanced.pending {
+        border-left-color: #ffc107;
+        background: #fff9e6;
+    }
+
+    .schedule-item-enhanced.approved {
+        border-left-color: #28a745;
+        background: #f0f8f0;
+    }
+
+    .schedule-item-enhanced.rejected {
+        border-left-color: #dc3545;
+        background: #fdf2f2;
+    }
+
+    .shift-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .shift-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+    }
+
+    .shift-icon.morning {
+        background: linear-gradient(45deg, #ff9a56, #ff6b6b);
+    }
+
+    .shift-icon.afternoon {
+        background: linear-gradient(45deg, #4facfe, #00f2fe);
+    }
+
+    .rejection-reason {
+        margin-top: 5px;
+        padding: 8px 12px;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #742a2a;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
