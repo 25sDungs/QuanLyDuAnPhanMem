@@ -1,7 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, Date, DateTime
-from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.orm import relationship
-from BeStrongClinicReservation.app import db, app
+from app import db, app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 import pymysql

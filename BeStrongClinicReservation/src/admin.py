@@ -1,4 +1,8 @@
-from BeStrongClinicReservation.app import app, db
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from app import app, db
 from flask import redirect
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView

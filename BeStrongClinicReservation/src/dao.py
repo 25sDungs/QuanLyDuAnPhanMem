@@ -1,5 +1,8 @@
-from flask_login import current_user
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+from flask_login import current_user
 from src.models import User, QuyDinh, Arrangement, Doctor, HoSo, Doctor_Schedule, ScheduleStatus
 from src.models import UserRole
 from app import app, db

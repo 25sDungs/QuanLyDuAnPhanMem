@@ -6,7 +6,7 @@ env_variables:
   DB_USER: dainyisheree
   DB_PASSWORD: 123456
   DB_NAME: OnlineAppointmentSystem
-  DB_HOST: 34.124.252.236
+  DB_HOST: 35.198.207.57
   INSTANCE_NAME: dainyisheree
   PROJECT_ID: appointment-system-deployment
   REGION: asia-southeast1
