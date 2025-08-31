@@ -3,10 +3,10 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app import app, db
-from flask import redirect
+from flask import redirect, request
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from src.models import QuyDinh, User, Doctor, HoSo
+from src.models import QuyDinh, User, Doctor, HoSo, Arrangement
 from flask_login import current_user, logout_user
 import hashlib
 
@@ -49,6 +49,12 @@ class QuyDinhView(AdminView):
     column_editable_list = ['GiaTri']
 
 
+class ArrangementView(AdminView):
+    column_list = ['email', 'patient_name', 'appointment_date', 'status', 'address', 'description']
+    column_searchable_list = ['patient_name']
+    column_editable_list = ['status']
+
+
 class UserView(AdminView):
     column_list = ['id', 'username', 'user_role', 'phone']
     column_searchable_list = ['username', 'phone']
@@ -65,6 +71,26 @@ class BaseAdminView(BaseView):
         return current_user.is_authenticated and current_user.is_admin()
 
 
+class StatsView(BaseAdminView):
+    @expose("/")
+    def index(self):
+        month = request.args.get('ThangThongKe')
+        year = request.args.get('NamThongKe')
+        type_stats = request.args.get('LoaiThongKe')
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+
+        if year and type_stats == 'Revenue':
+            rstats = utils.revenue_stats_by_month(year=year)
+            return self.render('admin/stats.html', sum=utils.sum_revenue(rstats), rstats_year=rstats)
+
+        elif type_stats == 'Revenue':
+            rstats = utils.revenue_stats(month=month, from_date=from_date, to_date=to_date)
+            return self.render('admin/stats.html', sum=utils.sum_revenue(rstats), rstats=rstats)
+
+        return self.render('admin/stats.html')
+
+
 class LogoutView(BaseAdminView):
     @expose('/')
     def __index__(self):
@@ -73,7 +99,9 @@ class LogoutView(BaseAdminView):
 
 
 admin.add_view(UserView(User, db.session))
-admin.add_view(QuyDinhView(QuyDinh, db.session))
+admin.add_view(ArrangementView(Arrangement, db.session))
 admin.add_view(DoctorView(Doctor, db.session))
 admin.add_view(ProfileView(HoSo, db.session))
+admin.add_view(QuyDinhView(QuyDinh, db.session))
+admin.add_view(StatsView(name='Thống Kê'))
 admin.add_view(LogoutView(name='Đăng Xuất'))

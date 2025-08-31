@@ -242,14 +242,20 @@
                                         <td> {{ arr.appointment_date }}</td>
                                         <td> {{ arr.description }}</td>
                                         <td>
-                                            {% if arr.status != 'cancelled' %}
+                                            {% if arr.status == 'confirmed' %}
                                             <form method="POST"
                                                   action="{{ url_for('cancel_arrangement', arrangement_id=arr.id_arrangement) }}"
                                                   onsubmit="return confirm('Bạn có chắc muốn hủy lịch này không?');">
                                                 <button type="submit" class="btn btn-danger btn-sm">Hủy lịch</button>
                                             </form>
-                                            {% else %}
+                                            {% elif arr.status == 'completed' %}
+                                            Đã Khám
+                                            {% elif arr.status == 'failed' %}
+                                            Lịch Hủy Thanh Toán
+                                            {% elif arr.status == 'failed' %}
                                             Lịch Đã Hủy
+                                            {% else %}
+
                                             {% endif %}
                                         </td>
                                     </tr>

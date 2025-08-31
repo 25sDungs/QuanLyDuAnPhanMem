@@ -276,7 +276,7 @@ if __name__ == '__main__':
         # pk6 = PhieuKham(NgayLapPhieu=ngaypk3, HoaDon_ID=6)
         # db.session.add_all([pk1, pk2, pk3, pk4, pk5, pk6])
 
-        u = User(name="Huu Khang Doctor", username='Khang Doctor', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
-                 user_role=UserRole.DOCTOR, gender="Nam", phone='0903021744')
+        u = User(name="Huu Khang User", username='Khang User', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+                 user_role=UserRole.USER, gender="Nam", phone='0903021747')
         db.session.add(u)
         db.session.commit()

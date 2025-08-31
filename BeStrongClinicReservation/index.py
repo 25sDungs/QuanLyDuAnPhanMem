@@ -528,6 +528,21 @@ def doctor_profile(doctor_id):
     return render_template('Specialists/doctorProfile.html', doctor=doctor, doctor_id=doctor_id)
 
 
+@app.route("/login-admin", methods=['post'])
+def login_admin():
+    if request.method == 'POST':
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+
+        if phone and password:
+            user = auth_user(phone=phone, password=password)
+            if user:
+                login_user(user)
+            return redirect("/admin")
+
+    return redirect("/login")
+
+
 if __name__ == '__main__':
     from src import admin
 
