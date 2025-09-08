@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from models import *
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -57,14 +60,3 @@ def sum_revenue(lists):
     for i in lists:
         s += i[-1]
     return s
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        print("Creating tables...")
-        db.create_all()
-
-        print("Tables created successfully!")
-
-        db.session.commit()
-        print("Sample data added!")

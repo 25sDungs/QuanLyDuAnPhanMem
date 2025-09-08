@@ -15,8 +15,8 @@
         <form method="post" action="/login">
             <h1>Đăng Nhập</h1>
             <div class="social-container">
-                <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                <a href="{{ url_for('facebook_login') }}" class="social"><i class="fab fa-facebook-f"></i></a>
+                <a href="{{ url_for('google_login') }}" class="social"><i class="fab fa-google-plus-g"></i></a>
             </div>
             <span>hoặc sử dụng tài khoản</span>
             <input type="text" placeholder="Số Điện Thoại (+84)" id="phone" name="phone"/>

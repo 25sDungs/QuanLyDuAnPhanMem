@@ -1,23 +1,34 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, Date, DateTime
-from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.orm import relationship
 from app import db, app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 import pymysql
 import os
+import hashlib
+from enum import Enum as PyEnum
+from datetime import datetime, timedelta
 
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
-DB_CONNECTION_NAME=os.getenv('DB_CONNECTION_NAME')
+DB_CONNECTION_NAME = os.getenv('DB_CONNECTION_NAME')
+
 
 class UserRole(RoleEnum):
     ADMIN = 1
     USER = 2  # Patient
     DOCTOR = 3
-    NURSE = 4
-    CASHIER = 5
+
+
+class ScheduleStatus(PyEnum):
+    PENDING = 1
+    APPROVED = 2
+    REJECTED = 3
 
 
 class User(db.Model, UserMixin):
@@ -37,17 +48,11 @@ class User(db.Model, UserMixin):
     def is_doctor(self):
         return self.user_role == UserRole.DOCTOR
 
-    def is_nurse(self):
-        return self.user_role == UserRole.NURSE
-
     def is_user(self):
         return self.user_role == UserRole.USER
 
     def is_admin(self):
         return self.user_role == UserRole.ADMIN
-
-    def is_cashier(self):
-        return self.user_role == UserRole.CASHIER
 
 
 class Admin(User):
@@ -55,17 +60,19 @@ class Admin(User):
     id_admin = Column(Integer, ForeignKey(User.id_patient), primary_key=True, nullable=False)
     QuyenHan = Column(String(50))
     __mapper_args__ = {
-            'polymorphic_identity': 'admin',
-            'inherit_condition': id_admin == User.id_patient,
-        }
+        'polymorphic_identity': 'admin',
+        'inherit_condition': id_admin == User.id_patient,
+    }
 
 
 class Doctor(User):
     __tablename__ = 'Doctor'
     id_doctor = Column(Integer, ForeignKey(User.id_patient), primary_key=True, nullable=False)
-    ChuyenNganh = Column(String(50))
+    chungChi = Column(String(50))
     HocVi = Column(String(50))
-    GioLamViec = Column(Integer)
+    SoGioLamViec = Column(Integer)
+    KinhNghiem = Column(String(50))
+    DanhGia = Column(String(50))
 
     __mapper_args__ = {
         'polymorphic_identity': 'doctor',
@@ -73,47 +80,160 @@ class Doctor(User):
     }
 
 
-class Nurse(User):
-    __tablename__ = 'Nurse'
-    id_nurse = Column(Integer, ForeignKey(User.id_patient), primary_key=True, nullable=False)
-    ChucVu = Column(String(50))
+class LichLamViec(db.Model):
+    __tablename__ = 'WorkSchedule'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    Ngay = Column(Date)
+    GioBatDau = Column(DateTime)
+    GioKetThuc = Column(DateTime)
+    IsLamNgoaiGio = Column(Boolean)
+    HuyLich = Column(Boolean)
+    BacSi_id = Column(Integer, ForeignKey(Doctor.id_doctor), nullable=True)
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'nurse',
-        'inherit_condition': id_nurse == User.id_patient,
-    }
-
-
-class ThuNgan(User):
-    __tablename__ = 'Cashier'
-    id_cashier = Column(Integer, ForeignKey(User.id_patient), primary_key=True, nullable=False)
-    ChucVu = Column(String(50))
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'thu ngan',
-        'inherit_condition': id_cashier == User.id_patient,
-    }
+    def huy_lich(self):
+        self.HuyLich = True
 
 
-class ArrList(db.Model):
-    __tablename__ = 'ArrangementList'
-    id_arr_list = Column(Integer, primary_key=True, autoincrement=True)
-    appointment_date = Column(Date, nullable=False, unique=True)
-    patient_quantity = Column(Integer, nullable=False)
-    # tinh_trang_thanh_toan = Column(Boolean)
-    description = Column(String(255), nullable=True)
-    arrangement = relationship('Arrangement', backref='arrlist', lazy=True)
+class Doctor_Schedule(db.Model):
+    __tablename__ = 'Doctor_Schedule'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    BacSi_id = Column(Integer, ForeignKey('User.id_patient'), nullable=False)
+    Thu = Column(Integer, nullable=False)
+    Buoi = Column(String(10), nullable=False)
+    TrangThai = Column(Boolean, default=True)
+    TrangThaiDuyet = Column(Enum(ScheduleStatus), default=ScheduleStatus.PENDING)
+    TuanLamViec = Column(Date, nullable=False)
+    LyDoTuChoi = Column(String(200), nullable=True)
+    NgayDuyet = Column(DateTime, nullable=True)
+    NguoiDuyet_id = Column(Integer, ForeignKey('User.id_patient'), nullable=True)
 
-    def get_id(self):
-        return self.id_arr_list
+    NgayTao = Column(DateTime, default=datetime.utcnow)
+    NgayCapNhat = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    bac_si = relationship("Doctor", backref="lich_lam_viec", foreign_keys=[BacSi_id])
+    nguoi_duyet = relationship("User", foreign_keys=[NguoiDuyet_id])
+
+    def __repr__(self):
+        thu_names = {2: 'Thứ 2', 3: 'Thứ 3', 4: 'Thứ 4', 5: 'Thứ 5', 6: 'Thứ 6', 7: 'Thứ 7', 8: 'Chủ nhật'}
+        return f"<Doctor_Schedule {self.bac_si.username if self.bac_si else 'Unknown'} - {thu_names.get(self.Thu)} - {self.Buoi}>"
+
+    def get_thu_name(self):
+        thu_names = {2: 'Thứ 2', 3: 'Thứ 3', 4: 'Thứ 4', 5: 'Thứ 5', 6: 'Thứ 6', 7: 'Thứ 7', 8: 'Chủ nhật'}
+        return thu_names.get(self.Thu, 'Không xác định')
+
+    def get_status_text(self):
+        status_map = {
+            ScheduleStatus.PENDING: 'Chờ duyệt',
+            ScheduleStatus.APPROVED: 'Đã duyệt',
+            ScheduleStatus.REJECTED: 'Từ chối'
+        }
+        return status_map.get(self.TrangThaiDuyet, 'Không xác định')
+
+    def get_status_class(self):
+        status_class_map = {
+            ScheduleStatus.PENDING: 'pending',
+            ScheduleStatus.APPROVED: 'approved',
+            ScheduleStatus.REJECTED: 'rejected'
+        }
+        return status_class_map.get(self.TrangThaiDuyet, 'pending')
+
+    def toggle_trang_thai(self):
+        self.TrangThai = not self.TrangThai
+        self.NgayCapNhat = datetime.utcnow()
+
+    def approve(self, admin_id):
+        self.TrangThaiDuyet = ScheduleStatus.APPROVED
+        self.NgayDuyet = datetime.utcnow()
+        self.NguoiDuyet_id = admin_id
+        self.NgayCapNhat = datetime.utcnow()
+
+    def reject(self, admin_id, reason=None):
+        self.TrangThaiDuyet = ScheduleStatus.REJECTED
+        self.NgayDuyet = datetime.utcnow()
+        self.NguoiDuyet_id = admin_id
+        self.LyDoTuChoi = reason
+        self.NgayCapNhat = datetime.utcnow()
+
+    @staticmethod
+    def get_current_week_start():
+        today = datetime.now().date()
+        days_ahead = today.weekday()
+        monday = today - timedelta(days=days_ahead)
+        return monday
+
+    @staticmethod
+    def get_next_week_start():
+        current_monday = Doctor_Schedule.get_current_week_start()
+        return current_monday + timedelta(days=7)
+
+    @staticmethod
+    def get_week_range_text(start_date):
+        end_date = start_date + timedelta(days=6)
+        return f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+
+    @staticmethod
+    def cleanup_old_schedules():
+        current_week = Doctor_Schedule.get_current_week_start()
+        old_schedules = Doctor_Schedule.query.filter(
+            Doctor_Schedule.TuanLamViec < current_week
+        ).all()
+
+        for schedule in old_schedules:
+            db.session.delete(schedule)
+
+        db.session.commit()
+        return len(old_schedules)
+
+    @staticmethod
+    def get_available_slots(doctor_id=None, week_start=None):
+        if week_start is None:
+            week_start = Doctor_Schedule.get_next_week_start()
+
+        slots = []
+        thu_names = {2: 'Thứ 2', 3: 'Thứ 3', 4: 'Thứ 4', 5: 'Thứ 5', 6: 'Thứ 6', 7: 'Thứ 7', 8: 'Chủ nhật'}
+        buoi_options = ['Sang', 'Chieu']
+
+        for thu in range(2, 9):
+            for buoi in buoi_options:
+                existing = Doctor_Schedule.query.filter_by(
+                    BacSi_id=doctor_id,
+                    Thu=thu,
+                    Buoi=buoi,
+                    TuanLamViec=week_start,
+                    TrangThai=True
+                ).first() if doctor_id else None
+
+                slots.append({
+                    'thu': thu,
+                    'thu_name': thu_names[thu],
+                    'buoi': buoi,
+                    'is_selected': existing is not None,
+                    'schedule_id': existing.ID if existing else None,
+                    'week_start': week_start
+                })
+
+        return slots
+
+
+class QuyDinh(db.Model):
+    __tablename__ = 'Rule'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    TenQuyDinh = Column(String(50), nullable=False, unique=True)
+    GiaTri = Column(Integer)
+    MoTa = Column(String(100))
+
+
+class HoSo(db.Model):
+    __tablename__ = 'Profile'
+    id_profile = Column(Integer, primary_key=True, autoincrement=True)
+    link_profile = Column(String(50))
+    BacSi_id = Column(Integer, ForeignKey(Doctor.id_doctor), nullable=True)
 
 
 class Arrangement(db.Model):
     __tablename__ = 'Arrangement'
     id_arrangement = Column(Integer, primary_key=True, autoincrement=True)
-    id_arr_list = Column(Integer, ForeignKey(ArrList.id_arr_list), nullable=True)  # Reference to an arrangement list
     id_patient = Column(Integer, ForeignKey(User.id_patient), nullable=False)  # Khóa ngoại tham chiếu User.id_patient
-    id_nurse = Column(Enum(UserRole), default=UserRole.NURSE, nullable=True)  # nullable
     phone = Column(String(20), nullable=False)
     email = Column(String(50), nullable=False)
     gender = Column(String(50), nullable=False)
@@ -121,6 +241,7 @@ class Arrangement(db.Model):
     appointment_date = Column(Date, nullable=False)
     address = Column(String(255), nullable=True)
     description = Column(String(255), nullable=True)
+    status = Column(String(50), nullable=False)
 
     def to_dict(self):
         return {
@@ -132,143 +253,30 @@ class Arrangement(db.Model):
         }
 
 
-# ADMIN VA THUOC
-class DonVi(db.Model):
-    __tablename__ = 'Unit'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    TenDonVi = Column(String(50), unique=True)
-    SoLuong = Column(Integer)
-    MoTa = Column(String(50))
-    Thuocs = relationship('Thuoc', backref='donvi', lazy=True)
+if __name__ == '__main__':
+    with app.app_context():
+        # db.create_all()
+        # u = User(username='admin', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+        #          user_role=UserRole.ADMIN, gender="Nam", phone='0000000000')
+        # db.session.add(u)
+        # q1 = QuyDinh(TenQuyDinh='Số Bệnh Nhân Khám', MoTa='Số Bệnh Nhân Khám Trong Ngày', GiaTri=40)
+        # q2 = QuyDinh(TenQuyDinh='Số Tiền Khám', MoTa='Số Tiền Khám', GiaTri=100000)
+        # db.session.add_all([q1, q2])
+        # ngaypk1 = datetime(2024, 12, 6)
+        # pk1 = PhieuKham(NgayLapPhieu=ngaypk1, HoaDon_ID=1)
+        # ngaypk2 = datetime(2024, 11, 14)
+        # pk2 = PhieuKham(NgayLapPhieu=ngaypk2, HoaDon_ID=2)
+        # ngaypk3 = datetime(2024, 12, 19)
+        # pk3 = PhieuKham(NgayLapPhieu=ngaypk3, HoaDon_ID=3)
+        # ngaypk4 = datetime(2024, 10, 6)
+        # pk4 = PhieuKham(NgayLapPhieu=ngaypk1, HoaDon_ID=4)
+        # ngaypk5 = datetime(2024, 9, 14)
+        # pk5 = PhieuKham(NgayLapPhieu=ngaypk2, HoaDon_ID=5)
+        # ngaypk6 = datetime(2024, 12, 19)
+        # pk6 = PhieuKham(NgayLapPhieu=ngaypk3, HoaDon_ID=6)
+        # db.session.add_all([pk1, pk2, pk3, pk4, pk5, pk6])
 
-    def __str__(self):
-        return self.TenDonVi
-
-
-class LoaiThuoc(db.Model):
-    __tablename__ = 'MedicineType'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    TenLoaiThuoc = Column(String(50), nullable=False, unique=True)
-    Thuocs = relationship('Thuoc', backref='loaithuoc', lazy=True)
-
-    def __str__(self):
-        return self.TenLoaiThuoc
-
-
-class Thuoc(db.Model):
-    __tablename__ = 'Medicine'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    TenThuoc = Column(String(50), unique=True)
-    LoaiThuoc_ID = Column(Integer, ForeignKey(LoaiThuoc.ID), nullable=False)
-    DonVi_ID = Column(Integer, ForeignKey(DonVi.ID), nullable=False)
-    GiaThuoc = Column(Integer)
-    SoLuong = Column(Integer)
-    ThuocTrongPhieuKham = relationship('ThuocTrongPhieuKham', backref='thuoc', lazy=True)
-
-
-class HoaDon(db.Model):
-    __tablename__ = 'Bill'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    TienKham = Column(DOUBLE)
-    TienThuoc = Column(DOUBLE)
-    TinhTrangThanhToan = Column(Boolean)
-    # mqh 1-1
-    phieukham = relationship("PhieuKham", back_populates="hoadon", uselist=False)
-    # dung back_populates thay the cho backref
-
-    def set_state(self):
-        self.TinhTrangThanhToan = 1
-
-
-class QuyDinh(db.Model):
-    __tablename__ = 'Rule'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    TenQuyDinh = Column(String(50), nullable=False, unique=True)
-    GiaTri = Column(Integer)
-    MoTa = Column(String(100))
-
-
-class PhieuKham(db.Model):
-    __tablename__ = 'Prescription'
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    NgayLapPhieu = Column(DateTime)
-    ThuocTrongPhieuKhams = relationship('ThuocTrongPhieuKham', backref='phieukham', lazy=True)
-    LoaiBenh = Column(String(50))
-    # Tạo mối quan hệ 1-1
-    HoaDon_ID = Column(Integer, ForeignKey(HoaDon.ID), unique=True)
-    hoadon = relationship("HoaDon", back_populates="phieukham", uselist=False)
-    BacSiLapPhieu = Column(String(50), nullable=True, default="")
-    BenhNhan_id = Column(Integer, ForeignKey(User.id_patient), nullable=True)
-    # dung back_populates thay the cho backref
-
-
-class ThuocTrongPhieuKham(db.Model):
-    __tablename__ = 'MecInPrescription'
-    PhieuKham_ID = Column(Integer, ForeignKey(PhieuKham.ID), primary_key=True, nullable=False)
-    Thuoc_ID = Column(Integer, ForeignKey(Thuoc.ID), primary_key=True, nullable=False)
-    LieuLuong = Column(Integer)
-    CachDung = Column(String(50))
-
-
-# if __name__ == '__main__':
-#     with app.app_context():
-#         db.create_all()
-#         # u = User(username='admin', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
-#         #          user_role=UserRole.ADMIN, gender="Nam", phone='0000000000')
-#         # db.session.add(u)
-#         #
-#         # l1 = LoaiThuoc(TenLoaiThuoc='Thảo Dược')
-#         # dv1 = DonVi(TenDonVi='Vĩ', SoLuong=12, MoTa='1 vi = 12 vien')
-#         # db.session.add(l1)
-#         # db.session.add(dv1)
-#         #
-#         # t1 = Thuoc(TenThuoc="Thuốc Độc", LoaiThuoc_ID=1, DonVi_ID=1, GiaThuoc=200000, SoLuong=10)
-#         # t2 = Thuoc(TenThuoc="Thuốc Giải", LoaiThuoc_ID=1, DonVi_ID=1, GiaThuoc=5000000, SoLuong=3)
-#         # db.session.add_all([t1, t2])
-#         # q1 = QuyDinh(TenQuyDinh='Số Bệnh Nhân Khám', MoTa='Số Bệnh Nhân Khám Trong Ngày', GiaTri=40)
-#         # q2 = QuyDinh(TenQuyDinh='Số Tiền Khám', MoTa='Số Tiền Khám', GiaTri=100000)
-#         # db.session.add_all([q1, q2])
-#         #
-#         # # Tính tiền thuốc và lấy tiền khám từ db
-#         # hd1 = HoaDon(TienThuoc=300000, TienKham=100000, TinhTrangThanhToan=True)
-#         # hd2 = HoaDon(TienThuoc=299000, TienKham=100000, TinhTrangThanhToan=True)
-#         # hd3 = HoaDon(TienThuoc=594000, TienKham=100000, TinhTrangThanhToan=True)
-#         # hd4 = HoaDon(TienThuoc=388000, TienKham=100000, TinhTrangThanhToan=True)
-#         # hd5 = HoaDon(TienThuoc=186000, TienKham=100000, TinhTrangThanhToan=True)
-#         # hd6 = HoaDon(TienThuoc=789000, TienKham=100000, TinhTrangThanhToan=True)
-#         # db.session.add_all([hd1, hd2, hd3, hd4, hd5, hd6])
-#         #
-#         # ngaypk1 = datetime(2024, 12, 6)
-#         # pk1 = PhieuKham(NgayLapPhieu=ngaypk1, HoaDon_ID=1)
-#         # ngaypk2 = datetime(2024, 11, 14)
-#         # pk2 = PhieuKham(NgayLapPhieu=ngaypk2, HoaDon_ID=2)
-#         # ngaypk3 = datetime(2024, 12, 19)
-#         # pk3 = PhieuKham(NgayLapPhieu=ngaypk3, HoaDon_ID=3)
-#         # ngaypk4 = datetime(2024, 10, 6)
-#         # pk4 = PhieuKham(NgayLapPhieu=ngaypk1, HoaDon_ID=4)
-#         # ngaypk5 = datetime(2024, 9, 14)
-#         # pk5 = PhieuKham(NgayLapPhieu=ngaypk2, HoaDon_ID=5)
-#         # ngaypk6 = datetime(2024, 12, 19)
-#         # pk6 = PhieuKham(NgayLapPhieu=ngaypk3, HoaDon_ID=6)
-#         # db.session.add_all([pk1, pk2, pk3, pk4, pk5, pk6])
-#         #
-#         # Drug1InReport1 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='1', LieuLuong='10',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug2InReport1 = ThuocTrongPhieuKham(Thuoc_ID='2', PhieuKham_ID='1', LieuLuong='2',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug1InReport2 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='2', LieuLuong='3',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug1InReport3 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='3', LieuLuong='5',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug1InReport4 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='4', LieuLuong='10',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug2InReport4 = ThuocTrongPhieuKham(Thuoc_ID='2', PhieuKham_ID='4', LieuLuong='2',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug1InReport5 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='5', LieuLuong='3',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # Drug1InReport6 = ThuocTrongPhieuKham(Thuoc_ID='1', PhieuKham_ID='6', LieuLuong='5',
-#         #                                      CachDung='Dùng Sau Khi Ăn')
-#         # db.session.add_all(
-#         #     [Drug1InReport1, Drug2InReport1, Drug1InReport2, Drug1InReport3, Drug1InReport4, Drug2InReport4,
-#         #      Drug1InReport5, Drug1InReport6])
-#         db.session.commit()
+        u = User(name="Huu Khang User", username='Khang User', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+                 user_role=UserRole.USER, gender="Nam", phone='0903021747')
+        db.session.add(u)
+        db.session.commit()

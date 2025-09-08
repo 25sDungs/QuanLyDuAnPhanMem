@@ -16,9 +16,7 @@
     <label class="greeting">
         Chào {{ current_user.username }}
         (
-        {% if current_user.is_nurse() %}
-        NURSE
-        {% elif current_user.is_doctor() %}
+        {% if current_user.is_doctor() %}
         DOCTOR
         {% elif current_user.is_admin() %}
         ADMIN
@@ -231,6 +229,7 @@
                                         <th scope="col">Address</th>
                                         <th scope="col">Appointment Date</th>
                                         <th scope="col">Description</th>
+                                        <th scope="col"></th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -242,6 +241,23 @@
                                         <td> {{ arr.address }}</td>
                                         <td> {{ arr.appointment_date }}</td>
                                         <td> {{ arr.description }}</td>
+                                        <td>
+                                            {% if arr.status == 'confirmed' %}
+                                            <form method="POST"
+                                                  action="{{ url_for('cancel_arrangement', arrangement_id=arr.id_arrangement) }}"
+                                                  onsubmit="return confirm('Bạn có chắc muốn hủy lịch này không?');">
+                                                <button type="submit" class="btn btn-danger btn-sm">Hủy lịch</button>
+                                            </form>
+                                            {% elif arr.status == 'completed' %}
+                                            Đã Khám
+                                            {% elif arr.status == 'failed' %}
+                                            Lịch Hủy Thanh Toán
+                                            {% elif arr.status == 'failed' %}
+                                            Lịch Đã Hủy
+                                            {% else %}
+
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                     </tbody>
@@ -253,18 +269,15 @@
                 </div>
             </div>
         </div>
-
     </div>
     <div class="text-right mt-3">
         <button type="button" class="btn btn-primary">Lưu Những Thay Đổi</button>&nbsp;
         <button type="button" class="btn btn-default">Bỏ</button>
     </div>
-
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript">
-    </script>
-
+    <script type="text/javascript"></script>
+</div>
 </body>
 </html>

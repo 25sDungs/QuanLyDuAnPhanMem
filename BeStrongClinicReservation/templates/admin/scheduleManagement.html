@@ -1,0 +1,409 @@
+{% block content %}
+
+<title>Quản Lý Lịch Làm Việc - Admin</title>
+<link rel="shortcut icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename= 'images/clinic.png') }}">
+<link rel="stylesheet" href="static/styleExe/Admin/scheduleManagement.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user-shield"></i> Quản Lý Lịch Làm Việc</h1>
+            <label class="greeting">
+                Xin chào Admin
+            </label>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-number" id="total-count">{{ stats.total if stats else 0 }}</div>
+                <div class="stat-label">Tổng đăng ký</div>
+            </div>
+            <div class="stat-card stat-pending">
+                <div class="stat-number" id="pending-count">{{ stats.pending if stats else 0 }}</div>
+                <div class="stat-label">Chờ duyệt</div>
+            </div>
+            <div class="stat-card stat-approved">
+                <div class="stat-number" id="approved-count">{{ stats.approved if stats else 0 }}</div>
+                <div class="stat-label">Đã duyệt</div>
+            </div>
+            <div class="stat-card stat-rejected">
+                <div class="stat-number" id="rejected-count">{{ stats.rejected if stats else 0 }}</div>
+                <div class="stat-label">Từ chối</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" id="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ 'success' if category == 'success' else 'error' }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="week-info">
+                <h3><i class="fas fa-calendar-week"></i> Tuần Làm Việc</h3>
+                <div class="week-dates" id="week-range">{{ week_range if week_range else 'Đang tải...' }}</div>
+            </div>
+
+            <h2 class="section-title">
+                <i class="fas fa-clock"></i>
+                Lịch Làm Việc Chờ Duyệt
+            </h2>
+
+            <div class="schedules-grid" id="schedules-container">
+                {% if pending_schedules %}
+                    {% for schedule in pending_schedules %}
+                        <div class="schedule-card" data-schedule-id="{{ schedule.ID }}">
+                            <div class="doctor-info">
+                                <div class="doctor-avatar">
+                                    {% if schedule.bac_si %}
+                                        {% set doctor_name = schedule.bac_si.name if schedule.bac_si.name else schedule.bac_si.username %}
+                                        {% set name_parts = doctor_name.split() %}
+                                        {% if name_parts|length >= 2 %}
+                                            {{ name_parts[0][0].upper() }}{{ name_parts[-1][0].upper() }}
+                                        {% else %}
+                                            {{ doctor_name[:2].upper() }}
+                                        {% endif %}
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                </div>
+                                <div class="doctor-details">
+                                    {% if schedule.bac_si %}
+                                        {% set doctor_name = schedule.bac_si.name if schedule.bac_si.name else schedule.bac_si.username %}
+                                        <h4>BS. {{ doctor_name }}</h4>
+                                        <small>
+                                            {% if hasattr(schedule.bac_si, 'chungChi') and schedule.bac_si.chungChi %}
+                                                {{ schedule.bac_si.chungChi }}
+                                            {% else %}
+                                                Bác sĩ
+                                            {% endif %}
+                                        </small>
+                                    {% else %}
+                                        <h4>BS. Không xác định</h4>
+                                        <small>Bác sĩ</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="schedule-info">
+                                <div class="schedule-time">
+                                    <div class="time-icon {{ 'morning' if schedule.Buoi == 'Sang' else 'afternoon' }}">
+                                        <i class="fas fa-{{ 'sun' if schedule.Buoi == 'Sang' else 'moon' }}"></i>
+                                    </div>
+                                    <span class="schedule-date">
+                                        {{ schedule.get_thu_name() }} - {{ 'Buổi sáng' if schedule.Buoi == 'Sang' else 'Buổi chiều' }}
+                                    </span>
+                                </div>
+                                {% if schedule.NgayTao %}
+                                    <small class="creation-date">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        Đăng ký: {{ schedule.NgayTao.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                            <div class="actions">
+                                <button class="btn btn-approve" onclick="approveSchedule({{ schedule.ID }})">
+                                    <i class="fas fa-check"></i> Duyệt
+                                </button>
+                                <button class="btn btn-reject" onclick="openRejectModal({{ schedule.ID }}, 'BS. {{ schedule.bac_si.name if schedule.bac_si and schedule.bac_si.name else (schedule.bac_si.username if schedule.bac_si else 'Không xác định') }}', '{{ schedule.get_thu_name() }} - {{ 'Buổi sáng' if schedule.Buoi == 'Sang' else 'Buổi chiều' }}')">
+                                    <i class="fas fa-times"></i> Từ chối
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-calendar-check"></i>
+                        <h3>Không có lịch nào chờ duyệt</h3>
+                        <p>Tất cả lịch làm việc đã được xử lý</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Từ Chối Lịch Làm Việc</h2>
+                <span class="close" onclick="closeRejectModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bác sĩ:</label>
+                <input type="text" id="reject-doctor-name" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ca làm việc:</label>
+                <input type="text" id="reject-schedule-time" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lý do từ chối: <span style="color: red;">*</span></label>
+                <textarea id="reject-reason" class="form-control" placeholder="Nhập lý do từ chối..." required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeRejectModal()">Hủy</button>
+                <button type="button" class="btn btn-reject" onclick="submitRejectSchedule()">
+                    <i class="fas fa-times"></i> Từ Chối
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRejectScheduleId = null;
+
+        function showFlashMessage(message, type) {
+            const flashContainer = document.getElementById('flash-messages') || createFlashContainer();
+            const flashDiv = document.createElement('div');
+            flashDiv.className = `flash-message flash-${type}`;
+
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            flashDiv.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                ${message}
+            `;
+
+            flashContainer.appendChild(flashDiv);
+            flashContainer.style.display = 'block';
+
+            setTimeout(() => {
+                flashDiv.style.transition = 'opacity 0.5s ease';
+                flashDiv.style.opacity = '0';
+                setTimeout(() => {
+                    flashDiv.remove();
+                    if (flashContainer.children.length === 0) {
+                        flashContainer.style.display = 'none';
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        function createFlashContainer() {
+            const container = document.createElement('div');
+            container.id = 'flash-messages';
+            container.className = 'flash-messages';
+            document.querySelector('.main-content').insertBefore(container, document.querySelector('.week-info'));
+            return container;
+        }
+
+        function approveSchedule(scheduleId) {
+            if (!confirm('Bạn có chắc chắn muốn duyệt lịch làm việc này?')) {
+                return;
+            }
+
+            const approveBtn = document.querySelector(`[data-schedule-id="${scheduleId}"] .btn-approve`);
+            const rejectBtn = document.querySelector(`[data-schedule-id="${scheduleId}"] .btn-reject`);
+
+            if (approveBtn) {
+                approveBtn.disabled = true;
+                approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            }
+            if (rejectBtn) {
+                rejectBtn.disabled = true;
+            }
+
+            fetch(`/schedule-management/approve/${scheduleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const scheduleCard = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+                    if (scheduleCard) {
+                        scheduleCard.remove();
+                        updateStats('approve');
+                        showFlashMessage(data.message || 'Đã duyệt lịch làm việc thành công!', 'success');
+                        checkEmptyState();
+                    }
+                } else {
+                    showFlashMessage(data.message || 'Có lỗi khi duyệt lịch làm việc!', 'error');
+                    // Re-enable buttons
+                    if (approveBtn) {
+                        approveBtn.disabled = false;
+                        approveBtn.innerHTML = '<i class="fas fa-check"></i> Duyệt';
+                    }
+                    if (rejectBtn) {
+                        rejectBtn.disabled = false;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFlashMessage('Có lỗi khi duyệt lịch làm việc!', 'error');
+                // Re-enable buttons
+                if (approveBtn) {
+                    approveBtn.disabled = false;
+                    approveBtn.innerHTML = '<i class="fas fa-check"></i> Duyệt';
+                }
+                if (rejectBtn) {
+                    rejectBtn.disabled = false;
+                }
+            });
+        }
+
+        function openRejectModal(scheduleId, doctorName, scheduleTime) {
+            currentRejectScheduleId = scheduleId;
+            document.getElementById('reject-doctor-name').value = doctorName;
+            document.getElementById('reject-schedule-time').value = scheduleTime;
+            document.getElementById('reject-reason').value = '';
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+            currentRejectScheduleId = null;
+        }
+
+        function submitRejectSchedule() {
+            const reason = document.getElementById('reject-reason').value.trim();
+            if (!reason) {
+                alert('Vui lòng nhập lý do từ chối!');
+                return;
+            }
+
+            if (!currentRejectScheduleId) {
+                alert('Có lỗi xảy ra, vui lòng thử lại!');
+                return;
+            }
+
+            // Disable buttons
+            const submitBtn = document.querySelector('.modal-actions .btn-reject');
+            const cancelBtn = document.querySelector('.modal-actions .btn-secondary');
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            }
+            if (cancelBtn) {
+                cancelBtn.disabled = true;
+            }
+
+            fetch(`/schedule-management/reject/${currentRejectScheduleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    reason: reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const scheduleCard = document.querySelector(`[data-schedule-id="${currentRejectScheduleId}"]`);
+                    if (scheduleCard) {
+                        scheduleCard.remove();
+                        updateStats('reject');
+                        showFlashMessage(data.message || 'Đã từ chối lịch làm việc!', 'error');
+                        checkEmptyState();
+                    }
+                    closeRejectModal();
+                } else {
+                    showFlashMessage(data.message || 'Có lỗi khi từ chối lịch làm việc!', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFlashMessage('Có lỗi khi từ chối lịch làm việc!', 'error');
+            })
+            .finally(() => {
+                // Re-enable buttons
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-times"></i> Từ Chối';
+                }
+                if (cancelBtn) {
+                    cancelBtn.disabled = false;
+                }
+            });
+        }
+
+        function updateStats(action) {
+            const pendingElement = document.getElementById('pending-count');
+            const approvedElement = document.getElementById('approved-count');
+            const rejectedElement = document.getElementById('rejected-count');
+
+            let pendingCount = parseInt(pendingElement.textContent);
+            let approvedCount = parseInt(approvedElement.textContent);
+            let rejectedCount = parseInt(rejectedElement.textContent);
+
+            if (pendingCount > 0) {
+                pendingCount--;
+                pendingElement.textContent = pendingCount;
+            }
+
+            if (action === 'approve') {
+                approvedCount++;
+                approvedElement.textContent = approvedCount;
+            } else if (action === 'reject') {
+                rejectedCount++;
+                rejectedElement.textContent = rejectedCount;
+            }
+        }
+
+        function checkEmptyState() {
+            const schedulesContainer = document.getElementById('schedules-container');
+            if (schedulesContainer.children.length === 0) {
+                schedulesContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-calendar-check"></i>
+                        <h3>Không có lịch nào chờ duyệt</h3>
+                        <p>Tất cả lịch làm việc đã được xử lý</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getCsrfToken() {
+            // Try to get CSRF token from meta tag or form
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta) {
+                return csrfMeta.getAttribute('content');
+            }
+
+            // If no CSRF token found, return empty string
+            // Flask-WTF might handle this automatically
+            return '';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('rejectModal');
+            if (event.target == modal) {
+                closeRejectModal();
+            }
+        }
+
+        // Auto-hide flash messages that came from server
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 0.5s ease';
+                    message.style.opacity = '0';
+                    setTimeout(() => {
+                        message.remove();
+                        const container = document.getElementById('flash-messages');
+                        if (container && container.children.length === 0) {
+                            container.style.display = 'none';
+                        }
+                    }, 500);
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+{% endblock %}
