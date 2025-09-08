@@ -17,7 +17,7 @@ DB_HOST = os.getenv('DB_HOST')
 PUBLIC_IP = os.getenv('PUBLIC_IP')
 PROJECT_ID = os.getenv('PROJECT_ID')
 INSTANCE_NAME = os.getenv('INSTANCE_NAME')
-REGION = os.getenv('REGION')
+REGION=os.getenv('REGION')
 
 app = Flask(__name__)
 CORS(app)
