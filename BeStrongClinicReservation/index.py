@@ -543,17 +543,6 @@ def login_admin():
     return redirect("/login")
 
 
-
-@app.route("/specialists/<int:doctor_id>", methods=['GET', 'POST'])
-def doctor_profile(doctor_id):
-    hoso = utils.get_profile_link(doctor_id)
-    if hoso:
-        return redirect(hoso)
-
-    doctor = dao.get_doctor_by_id(doctor_id)
-    return render_template('Specialists/doctorProfile.html', doctor=doctor, doctor_id=doctor_id)
-
-
 if __name__ == '__main__':
     from src import admin
 

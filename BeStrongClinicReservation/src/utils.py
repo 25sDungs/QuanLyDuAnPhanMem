@@ -1,5 +1,6 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from models import *
 from datetime import datetime, timedelta
@@ -11,6 +12,7 @@ start_of_year = datetime(current_year, 1, 1)
 end_of_year = datetime(current_year, 12, 31)
 
 trienkham = db.session.query(QuyDinh).filter_by(ID=2).first().GiaTri
+
 
 def get_profile_link(id):
     hoso = HoSo.query.filter_by(BacSi_id=id).first()
